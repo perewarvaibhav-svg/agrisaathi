@@ -67,9 +67,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         // Global handler for untracked auth fetch errors
         const handleAuthError = (e: PromiseRejectionEvent | ErrorEvent) => {
-            const msg = (e instanceof PromiseRejectionEvent ? e.reason?.message : e.message) || "";
-            if (msg.includes("Refresh Token Not Found") || msg.includes("invalid_refresh_token")) {
-                console.warn("Background Auth Failure detected, clearing local session...");
+            const reason = e instanceof PromiseRejectionEvent ? e.reason : e;
+            const msg = (reason?.message || reason?.error_description || "").toLowerCase();
+
+            if (msg.includes("refresh token") || msg.includes("not found") || msg.includes("invalid")) {
+                console.warn("RECOVERY: Force-clearing stale auth session from local storage.");
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem('supabase.auth.token');
+                    sessionStorage.clear();
+                }
                 supabase.auth.signOut({ scope: 'local' });
                 setUser(null);
                 setLoading(false);
@@ -85,9 +91,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 const { data: { session }, error } = await supabase.auth.getSession();
                 if (error) {
                     console.warn("Auth initialization warning:", error.message);
-                    // Crucial: 400 or 401 errors on token refresh mean we must clear local state
                     if (error.status === 400 || error.status === 401 || error.message.toLowerCase().includes("refresh token") || error.message.toLowerCase().includes("not found")) {
-                        // Clear invalid/stale local session data
+                        console.warn("RECOVERY: Session init failed, purging local tokens.");
+                        if (typeof window !== 'undefined') localStorage.removeItem('supabase.auth.token');
                         await supabase.auth.signOut({ scope: 'local' });
                         setUser(null);
                     }
