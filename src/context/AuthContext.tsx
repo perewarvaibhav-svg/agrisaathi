@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 const { data: { session }, error } = await supabase.auth.getSession();
                 if (error) {
                     console.warn("Auth initialization warning:", error.message);
-                    if (error.status === 400 || error.message.toLowerCase().includes("refresh token")) {
+                    if (error.status === 400 || error.message.toLowerCase().includes("refresh token") || error.message.toLowerCase().includes("not found")) {
                         // Clear invalid/stale local session data
                         await supabase.auth.signOut({ scope: 'local' });
                         setUser(null);
@@ -88,27 +88,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event: string, session: any) => {
-                if (event === 'SIGNED_OUT') {
+                if (event === 'SIGNED_OUT' || (event === 'TOKEN_REFRESHED' && !session)) {
                     setUser(null);
                     setLoading(false);
                     return;
                 }
 
-                if (session?.user) {
-                    const profile = await getOrCreateProfile(session.user);
-                    if (profile) {
-                        setUser(profile);
-                        if (event === 'SIGNED_IN' && typeof window !== 'undefined') {
-                            const url = new URL(window.location.href);
-                            if (url.pathname === '/login' || url.pathname === '/signup') {
-                                router.push('/advisor');
+                try {
+                    if (session?.user) {
+                        const profile = await getOrCreateProfile(session.user);
+                        if (profile) {
+                            setUser(profile);
+                            if (event === 'SIGNED_IN' && typeof window !== 'undefined') {
+                                const url = new URL(window.location.href);
+                                if (url.pathname === '/login' || url.pathname === '/signup') {
+                                    router.push('/advisor');
+                                }
                             }
                         }
+                    } else {
+                        setUser(null);
                     }
-                } else {
-                    setUser(null);
+                } catch (e) {
+                    console.error("Auth state change processing failed", e);
+                } finally {
+                    setLoading(false);
                 }
-                setLoading(false);
             }
         );
 

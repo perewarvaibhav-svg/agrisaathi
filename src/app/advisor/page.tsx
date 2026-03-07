@@ -65,12 +65,15 @@ export default function AdvisorDashboard() {
   const [showHistory, setShowHistory] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [chatSessions, setChatSessions] = useState<Array<{ id: string; title: string; date: string; messages: Message[] }>>([]);
+  const [mounted, setMounted] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => { setMounted(true); }, []);
+
   /* ── Load chat history from localStorage on mount ── */
   useEffect(() => {
-    if (user) {
+    if (mounted && user) {
       const savedHistory = localStorage.getItem(`agrisaathi_chat_${user.id}`);
       if (savedHistory) {
         try {
@@ -314,6 +317,8 @@ export default function AdvisorDashboard() {
   };
 
   /* ── Render ── */
+  if (!mounted) return null;
+
   return (
     <ProtectedRoute>
       <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "var(--font-body)", color: C.accent, display: "flex", flexDirection: "column" }}>

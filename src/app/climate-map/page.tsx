@@ -1,7 +1,6 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Navbar from "@/components/Navbar";
-import Link from "next/link";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 const OWM_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_KEY || "";
@@ -13,14 +12,12 @@ const LAYERS = [
     { id: "clouds_new", owm: "clouds_new", label: "☁️ Clouds", color: "#90A4AE", particle: "#CFD8DC", desc: "Total cloud cover (%)" },
     { id: "temp_new", owm: "temp_new", label: "🌡️ Temperature", color: "#FF8A65", particle: "#FFAB76", desc: "Surface temperature (°C)" },
     { id: "pressure_new", owm: "pressure_new", label: "🧭 Pressure", color: "#CE93D8", particle: "#E1BEE7", desc: "Atmospheric pressure (hPa)" },
-    { id: "soil_moisture", owm: null, label: "🌱 Soil Moisture", color: "#A5D6A7", particle: "#C8E6C9", desc: "AI-simulated topsoil moisture index" },
-    { id: "drought_index", owm: null, label: "🏜️ Drought", color: "#FFAB91", particle: "#FFCCBC", desc: "AI-simulated drought risk overlay" },
 ];
 
-const INDIA = { lat: 22.5, lon: 80.0, zoom: 5 };
+const INDIA = { lat: 21.0, lon: 78.0, zoom: 5 };
 
 const REGIONS = [
-    { label: "All India", lat: 22.5, lon: 80.0, zoom: 5 },
+    { label: "All India", lat: 21.0, lon: 78.0, zoom: 5 },
     { label: "North India", lat: 28.6, lon: 77.2, zoom: 6 },
     { label: "Maharashtra", lat: 19.7, lon: 75.7, zoom: 6 },
     { label: "Punjab", lat: 31.1, lon: 75.3, zoom: 7 },
@@ -30,58 +27,34 @@ const REGIONS = [
     { label: "Gujarat", lat: 22.3, lon: 71.2, zoom: 6 },
 ];
 
-
 export default function ClimateMapPage() {
-    const [activeLayer, setActiveLayer] = useState(LAYERS[0]);
+    const [activeLayer, setActiveLayer] = useState(LAYERS[1]); // Default to Wind
     const [coords, setCoords] = useState(INDIA);
-    const [mapReady, setMapReady] = useState(false);
-    const mapRef = useRef<HTMLIFrameElement>(null);
-    const [imdAlert, setImdAlert] = useState<string>("");
-
-    /* ── Build self-contained Leaflet page ── */
-    const buildMap = useCallback(() => {
-        const hasOWM = Boolean(OWM_KEY);
-        const useOWM = hasOWM && activeLayer.owm;
-
-        const tileLayer = useOWM
-            ? `L.tileLayer('https://tile.openweathermap.org/map/${activeLayer.owm}/{z}/{x}/{y}.png?appid=${OWM_KEY}', {opacity:0.7,attribution:'OpenWeatherMap'}).addTo(map);`
-            : `L.rectangle([[6,68],[37,97]],{color:'${activeLayer.color}',weight:0,fillColor:'${activeLayer.color}',fillOpacity:0.22}).addTo(map);`;
-
-        return `data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html><html><head>
-<meta charset="utf-8">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<style>
-html,body,#map{height:100%;margin:0;padding:0;background:#030a03;}
-.leaflet-tile-pane{filter:saturate(1.4) brightness(0.85) contrast(1.1);}
-.leaflet-control-attribution{font-size:9px;background:rgba(0,0,0,0.6)!important;color:#aaa;}
-</style></head><body>
-<div id="map"></div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-var map=L.map('map',{center:[${coords.lat},${coords.lon}],zoom:${coords.zoom},zoomControl:true,attributionControl:true});
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'CARTO',maxZoom:19}).addTo(map);
-${tileLayer}
-</script></body></html>`)}`;
-    }, [activeLayer, coords]);
-
-
-    /* ── Fetch Crop Risk Intelligence ── */
+    const [mounted, setMounted] = useState(false);
+    const mapIframeRef = useRef<HTMLIFrameElement>(null);
     const [riskData, setRiskData] = useState<any>(null);
     const [loadingRisk, setLoadingRisk] = useState(false);
+    const [imdAlert, setImdAlert] = useState<string>("");
 
+    useEffect(() => { setMounted(true); }, []);
+
+    /* ── Sync Map via postMessage to avoid reload jitter ── */
     useEffect(() => {
+        if (!mounted || !mapIframeRef.current) return;
+        const msg = { type: 'SYNC_MAP', lat: coords.lat, lon: coords.lon, zoom: coords.zoom, layer: activeLayer.owm, key: OWM_KEY, color: activeLayer.color };
+        mapIframeRef.current.contentWindow?.postMessage(msg, "*");
+    }, [coords, activeLayer, mounted]);
+
+    /* ── Fetch Crop Risk Intelligence ── */
+    useEffect(() => {
+        if (!mounted) return;
         const fetchRisk = async () => {
             setLoadingRisk(true);
             try {
-                // Determine mock crop based on region for demo
-                const cropMap: Record<string, string> = { "Punjab": "Wheat", "Maharashtra": "Cotton", "Gujarat": "Groundnut", "Andhra": "Paddy" };
-                const regionName = REGIONS.find(r => r.lat === coords.lat && r.lon === coords.lon)?.label || "All India";
-                const crop = cropMap[regionName] || "Paddy";
-
                 const res = await fetch("/api/crop-risk", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ lat: coords.lat, lon: coords.lon, crop: crop, stage: "Vegetative", lang: "en" })
+                    body: JSON.stringify({ lat: coords.lat, lon: coords.lon, crop: "Paddy", stage: "Vegetative", lang: "en" })
                 });
                 if (res.ok) setRiskData(await res.json());
             } catch (e) {
@@ -90,205 +63,236 @@ ${tileLayer}
             setLoadingRisk(false);
         };
         fetchRisk();
-    }, [coords]);
+    }, [coords, mounted]);
 
-
-    /* ── IMD-style rotating alert banners ── */
-    const IMD_ALERTS = [
-        "⚡ IMD WARNING: Thunderstorm likely over Punjab, Haryana (next 24h)",
-        "🌊 CYCLONE WATCH: Bay of Bengal system tracking towards Odisha coast",
-        "🌡️ HEAT WAVE: Severe heat conditions over Vidarbha — avoid outdoor work 11am-4pm",
-        "🌧️ HEAVY RAINFALL ALERT: Karnataka, Kerala — Red Alert issued",
-        "💨 STRONG WIND ALERT: Coastal Andhra — 45–65 km/h gusts expected",
-    ];
-
+    /* ── IMD Rotating Alerts ── */
     useEffect(() => {
+        const ALERTS = [
+            "⚡ IMD WARNING: Thunderstorm likely over Punjab, Haryana (next 24h)",
+            "🌊 CYCLONE WATCH: Bay of Bengal system tracking towards Odisha coast",
+            "🌡️ HEAT WAVE: Severe heat conditions over Vidarbha",
+            "🌧️ HEAVY RAINFALL ALERT: Karnataka, Kerala — Red Alert issued",
+        ];
         let idx = 0;
-        setImdAlert(IMD_ALERTS[0]);
-        const t = setInterval(() => { idx = (idx + 1) % IMD_ALERTS.length; setImdAlert(IMD_ALERTS[idx]); }, 4000);
+        setImdAlert(ALERTS[0]);
+        const t = setInterval(() => { idx = (idx + 1) % ALERTS.length; setImdAlert(ALERTS[idx]); }, 5000);
         return () => clearInterval(t);
     }, []);
 
-    const C = {
-        bg: "#05080A", border: "rgba(173,255,47,0.12)", accent: "#ADFF2F",
-        dim: "rgba(173,255,47,0.5)", panel: "rgba(0,0,0,0.45)",
-    };
+    const mapHtml = useMemo(() => `<!DOCTYPE html><html><head>
+    <meta charset="utf-8"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <style>
+        html,body,#map{height:100%;margin:0;padding:0;background:#030708;overflow:hidden;}
+        .leaflet-container{background:#030708!important;}
+        .leaflet-tile-pane{filter:saturate(1.2) brightness(0.7) contrast(1.1);}
+        canvas{pointer-events:none;z-index:1000;position:absolute;top:0;left:0;}
+    </style></head><body>
+    <div id="map"></div>
+    <canvas id="particles"></canvas>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        var map=L.map('map',{zoomControl:false,attributionControl:false}).setView([${coords.lat},${coords.lon}],${coords.zoom});
+        var base=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+        var weatherLayer=null;
+        var currentPartColor='${activeLayer.particle}';
+    
+        function updateLayer(l, k){
+            if(weatherLayer) map.removeLayer(weatherLayer);
+            if(l && k) {
+                weatherLayer = L.tileLayer('https://tile.openweathermap.org/map/'+l+'/{z}/{x}/{y}.png?appid='+k, {opacity:0.65});
+                weatherLayer.addTo(map);
+            }
+        }
+        updateLayer('${activeLayer.owm}', '${OWM_KEY}');
+    
+        // Particle Flow Simulation
+        const canvas=document.getElementById('particles');
+        const ctx=canvas.getContext('2d');
+        let particles=[];
+    
+        function resize(){ canvas.width=window.innerWidth; canvas.height=window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
+    
+        class Particle {
+            constructor(){ this.init(); }
+            init(){
+                this.x=Math.random()*canvas.width; this.y=Math.random()*canvas.height;
+                this.vx=(Math.random()-0.5)*2 + 2; this.vy=(Math.random()-0.5)*0.5;
+                this.life=Math.random()*100+50; this.alpha=Math.random()*0.5;
+            }
+            update(){
+                this.x+=this.vx; this.y+=this.vy; this.life--;
+                if(this.x>canvas.width || this.x<0 || this.y>canvas.height || this.y<0 || this.life<0) this.init();
+            }
+            draw(){
+                ctx.beginPath(); ctx.strokeStyle=currentPartColor; ctx.globalAlpha=this.alpha*(this.life/100);
+                ctx.lineWidth=1; ctx.moveTo(this.x,this.y); ctx.lineTo(this.x-this.vx*2,this.y-this.vy*2); ctx.stroke();
+            }
+        }
+        for(let i=0;i<150;i++) particles.push(new Particle());
+        function anim(){
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            particles.forEach(p=>{p.update(); p.draw();}); requestAnimationFrame(anim);
+        }
+        anim();
+    
+        window.onmessage=function(e){
+            var d=e.data;
+            if(d.type==='SYNC_MAP'){
+                map.flyTo([d.lat,d.lon], d.zoom, {animate:true, duration:1.5});
+                updateLayer(d.layer, d.key);
+                currentPartColor=d.color;
+            }
+        }
+    </script></body></html>`, []);
+
+    if (!mounted) return null;
 
     return (
         <ProtectedRoute>
-        <div style={{ minHeight: "100vh", background: "#05080A", color: "#E8F5E9", fontFamily: "var(--font-body)", overflow: "hidden" }}>
-            <Navbar />
+            <div style={{ minHeight: "100vh", background: "#030708", color: "#E8F5E9", fontFamily: "var(--font-body)", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                <Navbar />
 
-            {/* Scrolling Banner */}
-            <div style={{ marginTop: "64px", background: "rgba(255,160,0,0.15)", borderBottom: "1px solid rgba(255,160,0,0.3)", padding: "0.5rem", overflow: "hidden", whiteSpace: "nowrap" }}>
-                <div style={{ display: "inline-block", animation: "scroll-left 25s linear infinite", fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "#FFCA28", letterSpacing: "0.08em" }}>
-                    {imdAlert}
-                </div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "380px 1fr", height: "calc(100vh - 100px)", gap: "1px", background: "rgba(0,255,127,0.1)" }}>
-                {/* ── LEFT SIDEBAR (Controls & Risk Intel) ── */}
-                <div style={{ background: "rgba(5, 8, 10, 0.95)", borderRight: "1px solid rgba(0,255,127,0.15)", overflowY: "auto", padding: "1.5rem" }}>
-
-                    <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.8rem", color: "#00FF7F", margin: "0 0 1.5rem 0", letterSpacing: "1px" }}>
-                        CROP RISK INTELLIGENCE
-                    </h2>
-
-                    {/* Quick Jump */}
-                    <div style={{ marginBottom: "2rem" }}>
-                        <div style={{ fontSize: "0.7rem", fontFamily: "var(--font-mono)", color: "rgba(232, 245, 233, 0.5)", marginBottom: "0.8rem", textTransform: "uppercase" }}>📍 Select Location</div>
-                        <select
-                            style={{ width: "100%", padding: "0.8rem", background: "rgba(0,0,0,0.5)", border: "1px solid rgba(0,255,127,0.3)", color: "#fff", borderRadius: "8px", outline: "none" }}
-                            onChange={(e) => {
-                                const r = REGIONS.find(x => x.label === e.target.value);
-                                if (r) setCoords(r);
-                            }}
-                        >
-                            {REGIONS.map(r => <option key={r.label} value={r.label}>{r.label}</option>)}
-                        </select>
+                {/* 🚨 Ticker Banner with IMD Alerts */}
+                <div style={{
+                    marginTop: "64px", height: "32px", background: "rgba(255,160,0,0.1)",
+                    borderBottom: "1px solid rgba(255,160,0,0.2)", display: "flex", alignItems: "center",
+                    overflow: "hidden", position: "relative", zIndex: 10
+                }}>
+                    <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "120px", background: "#FF8F00", color: "#000", fontSize: "0.65rem", fontWeight: 900, display: "flex", alignItems: "center", justifyContent: "center", letterSpacing: "1px", zIndex: 2 }}>
+                        LIVE ALERTS
                     </div>
-
-                    {/* Risk Status Indicator */}
-                    {riskData && !loadingRisk && (
-                        <div style={{
-                            background: "rgba(173,255,47,0.05)",
-                            border: `1px solid ${C.border}`,
-                            borderRadius: "12px",
-                            padding: "1rem",
-                            marginBottom: "1.5rem"
-                        }}>
-                            <div style={{ fontSize: "0.65rem", color: C.dim, textTransform: "uppercase", marginBottom: "0.5rem" }}>Current Status</div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                                <div style={{
-                                    width: "12px", height: "12px", borderRadius: "50%",
-                                    background: riskData.risk.level === "SAFE" ? "#00FF7F" : riskData.risk.level === "SEVERE" ? "#FF3B3B" : "#F5C518",
-                                    boxShadow: `0 0 10px ${riskData.risk.level === "SAFE" ? "#00FF7F" : riskData.risk.level === "SEVERE" ? "#FF3B3B" : "#F5C518"}`
-                                }} />
-                                <span style={{ fontWeight: 700, fontSize: "1rem" }}>{riskData.risk.level} RISK</span>
-                            </div>
-                        </div>
-                    )}
-
-                    {loadingRisk && (
-                        <div style={{ padding: "1rem", textAlign: "center", color: C.accent, fontSize: "0.8rem", border: `1px solid ${C.border}`, borderRadius: "10px", marginBottom: "1.5rem" }}>
-                            ⚡ Recalculating AI Telemetry...
-                        </div>
-                    )}
-
-                    {/* Data Layers */}
-                    <div style={{ marginTop: "1rem" }}>
-                        <div style={{ fontSize: "0.7rem", fontFamily: "var(--font-mono)", color: "rgba(232, 245, 233, 0.5)", marginBottom: "0.8rem", textTransform: "uppercase" }}>🛰️ Satellite Overlay Layers</div>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                            {LAYERS.map(L => (
-                                <button key={L.id} onClick={() => setActiveLayer(L)} style={{
-                                    textAlign: "left", padding: "0.8rem", borderRadius: "8px", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.8rem",
-                                    border: activeLayer.id === L.id ? `1px solid ${L.color}` : "1px solid rgba(255,255,255,0.05)",
-                                    background: activeLayer.id === L.id ? `${L.color}15` : "rgba(0,0,0,0.3)",
-                                    color: activeLayer.id === L.id ? L.color : "rgba(255,255,255,0.6)",
-                                    transition: "all 0.2s"
-                                }}>
-                                    <span>{L.label}</span>
-                                    {activeLayer.id === L.id && <span style={{ marginLeft: "auto", width: "8px", height: "8px", borderRadius: "50%", background: L.color, boxShadow: `0 0 8px ${L.color}` }} />}
-                                </button>
-                            ))}
-                        </div>
+                    <div style={{ flex: 1, paddingLeft: "135px", color: "#FFCA28", fontSize: "0.75rem", fontFamily: "var(--font-mono)", whiteSpace: "nowrap", animation: "ticker 20s linear infinite" }}>
+                        {Array(5).fill(imdAlert).join(" ⚡ ")}
                     </div>
                 </div>
 
-                {/* ── RIGHT MAIN (Map + Effects) ── */}
-                <div style={{ position: "relative", width: "100%", height: "100%", background: "#05080A" }}>
+                <div style={{ flex: 1, display: "grid", gridTemplateColumns: "380px 1fr", position: "relative" }}>
 
-                    {/* Leaflet IFrame */}
-                    <div style={{ position: "absolute", inset: 0, zIndex: 1 }}>
-                        <iframe
-                            ref={mapRef}
-                            src={buildMap()}
-                            style={{ width: "100%", height: "100%", border: "none" }}
-                            title="climate-map"
-                            onLoad={() => setMapReady(true)}
-                        />
-                    </div>
+                    {/* 🎮 Map Controls Glass Sidebar */}
+                    <div style={{
+                        background: "rgba(3,7,8,0.85)", backdropFilter: "blur(20px)",
+                        borderRight: "1px solid rgba(255,255,255,0.05)", padding: "1.5rem",
+                        display: "flex", flexDirection: "column", gap: "1.5rem", zIndex: 10,
+                        boxShadow: "20px 0 50px rgba(0,0,0,0.5)"
+                    }}>
+                        <div>
+                            <h2 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#ADFF2F", marginBottom: "0.5rem", letterSpacing: "-0.5px" }}>CLIMATE INTELLIGENCE</h2>
+                            <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", lineHeight: 1.5 }}>AI-powered multi-layer weather telemetry for precision farming.</p>
+                        </div>
 
-                    {/* Map Interaction Overlay (Optional gradient) */}
-                    <div style={{ position: "absolute", inset: 0, zIndex: 3, pointerEvents: "none", boxShadow: "inset 0 0 100px rgba(0,0,0,0.9)" }} />
-
-                    {/* ── FLOATING TRANSPARENT RISK OVERLAY (Bottom Right) ── */}
-                    {riskData && !loadingRisk && (
-                        <div style={{
-                            position: "absolute", bottom: "30px", right: "30px",
-                            zIndex: 100, width: "400px", maxHeight: "80vh",
-                            background: "rgba(5, 8, 10, 0.7)", backdropFilter: "blur(20px) saturate(180%)",
-                            border: `1px solid ${C.border}`, borderRadius: "20px",
-                            padding: "1.5rem", overflowY: "auto",
-                            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-                            display: "flex", flexDirection: "column", gap: "1.25rem",
-                            transition: "all 0.4s ease"
-                        }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                                <div>
-                                    <div style={{ fontSize: "0.6rem", color: C.dim, letterSpacing: "1.5px", textTransform: "uppercase" }}>Analysis Engine</div>
-                                    <h3 style={{ margin: 0, fontSize: "1.3rem", color: "#fff", fontWeight: 700 }}>🌾 {riskData.crop} Advisor</h3>
-                                </div>
-                                <div style={{
-                                    background: riskData.risk.level === "SAFE" ? "rgba(0,255,127,0.1)" : riskData.risk.level === "SEVERE" ? "rgba(255,59,59,0.1)" : "rgba(245,197,24,0.1)",
-                                    padding: "6px 12px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.1)"
-                                }}>
-                                    <div style={{ fontSize: "1.4rem", fontWeight: 900, color: riskData.risk.level === "SAFE" ? "#00FF7F" : riskData.risk.level === "SEVERE" ? "#FF3B3B" : "#F5C518" }}>
-                                        {riskData.risk.score}%
-                                    </div>
-                                    <div style={{ fontSize: "0.55rem", color: "rgba(255,255,255,0.5)", textAlign: "center" }}>RISK</div>
-                                </div>
+                        {/* Location Selector */}
+                        <div>
+                            <label style={{ fontSize: "0.65rem", fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", marginBottom: "0.5rem", display: "block" }}>REGION MONITORING</label>
+                            <div style={{ position: "relative" }}>
+                                <select
+                                    style={{ width: "100%", padding: "0.85rem", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", color: "#fff", borderRadius: "12px", outline: "none", appearance: "none", fontSize: "0.9rem" }}
+                                    onChange={(e) => {
+                                        const r = REGIONS.find(x => x.label === e.target.value);
+                                        if (r) setCoords(r);
+                                    }}
+                                >
+                                    {REGIONS.map(r => <option key={r.label} value={r.label} style={{ background: "#030708" }}>{r.label}</option>)}
+                                </select>
                             </div>
+                        </div>
 
-                            <div style={{
-                                fontSize: "0.85rem", lineHeight: 1.6, color: "rgba(255,255,255,0.85)",
-                                background: "rgba(255,255,255,0.03)", padding: "12px", borderRadius: "12px",
-                                borderLeft: `3px solid ${C.accent}`, fontStyle: "italic"
-                            }}>
-                                {riskData.ai_advice || riskData.explanation || "No advice available"}
-                            </div>
-
-                            {riskData.risk?.threats_detected && riskData.risk.threats_detected.length > 0 && (
-                                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                                    <div style={{ fontSize: "0.65rem", color: C.dim, letterSpacing: "1.2px", textTransform: "uppercase", marginBottom: "4px" }}>Detected Threats</div>
-                                    {riskData.risk.threats_detected.map((threat: string, i: number) => (
-                                        <div key={i} className="risk-item" style={{
-                                            fontSize: "0.82rem", padding: "10px 14px", borderRadius: "10px",
-                                            background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
-                                            display: "flex", gap: "10px", transition: "all 0.2s linear", cursor: "default"
-                                        }}>
-                                            <span style={{ color: C.accent }}>●</span>
-                                            <span style={{ color: "rgba(255,255,255,0.9)" }}>{threat}</span>
+                        {/* Layer Switcher */}
+                        <div>
+                            <label style={{ fontSize: "0.65rem", fontWeight: 700, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", marginBottom: "0.8rem", display: "block" }}>SATELLITE TELEMETRY</label>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+                                {LAYERS.map(L => (
+                                    <button
+                                        key={L.id}
+                                        onClick={() => setActiveLayer(L)}
+                                        style={{
+                                            padding: "1rem", borderRadius: "14px", border: activeLayer.id === L.id ? `1px solid ${L.color}` : "1px solid rgba(255,255,255,0.05)",
+                                            background: activeLayer.id === L.id ? `${L.color}15` : "rgba(255,255,255,0.02)",
+                                            color: activeLayer.id === L.id ? "#fff" : "rgba(255,255,255,0.5)",
+                                            display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", transition: "all 0.3s ease", textAlign: "left"
+                                        }}
+                                    >
+                                        <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: activeLayer.id === L.id ? L.color : "rgba(255,255,255,0.1)", boxShadow: activeLayer.id === L.id ? `0 0 10px ${L.color}` : "none" }} />
+                                        <div>
+                                            <div style={{ fontSize: "0.85rem", fontWeight: 700 }}>{L.label}</div>
+                                            <div style={{ fontSize: "0.6rem", opacity: 0.6, marginTop: "2px" }}>{L.desc}</div>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-
-                            <div style={{ marginTop: "0.5rem", paddingTop: "1rem", borderTop: "1px solid rgba(255,255,255,0.1)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                    <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: activeLayer.color }} />
-                                    <span style={{ fontSize: "0.7rem", fontWeight: 600, color: "rgba(255,255,255,0.6)" }}>LAYER: {activeLayer.label}</span>
-                                </div>
-                                <div style={{ fontSize: "0.55rem", color: "rgba(255,255,255,0.3)" }}>Updated: {riskData.timestamp}</div>
+                                    </button>
+                                ))}
                             </div>
                         </div>
-                    )}
-                </div>
-            </div>
 
-            <style>{`
-                @keyframes scroll-left {
-                    0% { transform: translateX(100vw); }
-                    100% { transform: translateX(-100%); }
-                }
-                .risk-item:hover {
-                    background: rgba(173,255,47,0.12) !important;
-                    border: 1px solid rgba(173,255,47,0.3) !important;
-                    transform: translateX(6px);
-                    color: #fff !important;
-                }
-            `}</style>
-        </div>
+                        {/* Current Risk Card */}
+                        {riskData && (
+                            <div style={{
+                                marginTop: "auto", background: "rgba(173,255,47,0.05)", border: "1px solid rgba(173,255,47,0.15)",
+                                borderRadius: "16px", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "10px"
+                            }}>
+                                <div style={{ fontSize: "0.6rem", fontWeight: 800, color: "#ADFF2F", textTransform: "uppercase" }}>AI Risk Index</div>
+                                <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+                                    <span style={{ fontSize: "2rem", fontWeight: 900, color: riskData.risk.color === "🔴" ? "#FF3B3B" : "#ADFF2F" }}>{riskData.risk.score}%</span>
+                                    <span style={{ fontSize: "0.8rem", fontWeight: 700, opacity: 0.8 }}>{riskData.risk.level}</span>
+                                </div>
+                                <div style={{ fontSize: "0.75rem", lineHeight: 1.5, opacity: 0.7 }}>
+                                    Current forecast suggests {riskData.risk.level.toLowerCase()} pressure on {riskData.crop}.
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 📍 Main Map Screen */}
+                    <main style={{ position: "relative", overflow: "hidden" }}>
+                        <iframe
+                            ref={mapIframeRef}
+                            srcDoc={mapHtml}
+                            style={{ width: "100%", height: "100%", border: "none" }}
+                            title="weather-map"
+                        />
+
+                        {/* AI Analysis Floating Card */}
+                        {riskData && (
+                            <div style={{
+                                position: "absolute", bottom: "30px", right: "30px", width: "420px",
+                                background: "rgba(5, 10, 15, 0.7)", backdropFilter: "blur(30px) saturate(160%)",
+                                border: "1px solid rgba(255,255,255,0.08)", borderRadius: "24px",
+                                padding: "1.75rem", boxShadow: "0 30px 60px rgba(0,0,0,0.6)", zIndex: 20,
+                                display: "flex", flexDirection: "column", gap: "1rem"
+                            }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                                    <div>
+                                        <div style={{ color: "#ADFF2F", fontSize: "0.65rem", fontWeight: 900, letterSpacing: "1px" }}>FIELD TELEMETRY</div>
+                                        <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 800 }}>🌾 {riskData.crop} Analysis</h3>
+                                    </div>
+                                    <div style={{ background: "rgba(255,255,255,0.05)", padding: "10px", borderRadius: "15px", textAlign: "center", minWidth: "60px" }}>
+                                        <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "#ADFF2F" }}>{riskData.risk.score}%</div>
+                                        <div style={{ fontSize: "0.5rem", opacity: 0.5 }}>SCORE</div>
+                                    </div>
+                                </div>
+
+                                <div style={{ fontSize: "0.85rem", lineHeight: 1.7, color: "rgba(255,255,255,0.85)", fontStyle: "italic", background: "rgba(255,255,255,0.03)", padding: "15px", borderRadius: "15px", borderLeft: "4px solid #ADFF2F" }}>
+                                    {riskData.explanation || riskData.ai_advice}
+                                </div>
+
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid rgba(255,255,255,0.1)", paddingTop: "1rem" }}>
+                                    <span style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.4)" }}>Updated: {riskData.timestamp}</span>
+                                    <div style={{ display: "flex", gap: "8px" }}>
+                                        {riskData.risk.threats_detected?.slice(0, 2).map((t: string, i: number) => (
+                                            <span key={i} style={{ background: "rgba(255,0,0,0.15)", color: "#FF3B3B", fontSize: "0.65rem", padding: "4px 8px", borderRadius: "6px", fontWeight: 700 }}>{t.split('(')[0].trim()}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+                </div>
+
+                <style>{`
+                    @keyframes ticker {
+                        0% { transform: translateX(0); }
+                        100% { transform: translateX(-50%); }
+                    }
+                `}</style>
+            </div>
         </ProtectedRoute>
     );
 }

@@ -44,17 +44,21 @@ export default function Navbar() {
     const [lang, setLang] = useState("en");
     const [langOpen, setLangOpen] = useState(false);
     const pathname = usePathname();
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         const onScroll = () => setScrolled(window.scrollY > 20);
         window.addEventListener("scroll", onScroll);
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
     useEffect(() => {
-        const saved = localStorage.getItem(LANG_KEY);
-        if (saved) setLang(saved);
-    }, []);
+        if (mounted) {
+            const saved = localStorage.getItem(LANG_KEY);
+            if (saved) setLang(saved);
+        }
+    }, [mounted]);
 
     const selectLang = (code: string) => {
         setLang(code);
@@ -74,6 +78,16 @@ export default function Navbar() {
 
     const currentLang = LANGUAGES.find(l => l.code === lang) ?? LANGUAGES[0];
     const isAdvisor = pathname === "/advisor";
+
+    if (!mounted) return (
+        <nav className="nav-bar" style={{ height: "90px", position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000, background: "transparent" }}>
+            <div className="section-container" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", maxWidth: "1440px" }}>
+                <div className="nav-logo" style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                    <img src="/logo.png" alt="Logo" style={{ height: "50px", width: "50px", borderRadius: "100%" }} />
+                </div>
+            </div>
+        </nav>
+    );
 
     return (
         <nav
