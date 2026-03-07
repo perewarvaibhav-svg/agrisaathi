@@ -1,13 +1,15 @@
 import os
 import sys
 
-# Ensure ml-backend is in the path for relative imports inside it
-backend_path = os.path.join(os.path.dirname(__file__), '..', 'ml-backend')
+# Add ml-backend to path
+current_dir = os.path.dirname(__file__)
+backend_path = os.path.abspath(os.path.join(current_dir, '..', 'ml-backend'))
 sys.path.append(backend_path)
 
-# Change current directory to ml-backend so relative file paths (.env) still work
+# Change to backend directory so .env and model.joblib are found correctly
 os.chdir(backend_path)
 
+# Import the main FastAPI app from ml-backend/main.py
 from main import app
 
 # This 'app' will be used by Vercel for the /api routes
