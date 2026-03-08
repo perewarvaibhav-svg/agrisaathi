@@ -141,7 +141,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         initSession();
 
+        // Safety fallback: Unfreeze 'Authenticating...' screen if session is stuck
+        const timer = setTimeout(() => {
+            if (loading) {
+                console.warn("Auth initialization timed out. Forcing UI interaction.");
+                setLoading(false);
+            }
+        }, 8000);
+
         return () => {
+            clearTimeout(timer);
             if (typeof window !== 'undefined') window.removeEventListener('unhandledrejection', handleAuthError);
             subscription.unsubscribe();
         };
