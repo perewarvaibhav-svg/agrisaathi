@@ -8,8 +8,11 @@ current_dir = os.path.dirname(__file__)
 backend_path = os.path.abspath(os.path.join(current_dir, '..', 'ml-backend'))
 sys.path.append(backend_path)
 
-app = None
-import_error = None
+app = FastAPI()
+
+@app.get("/api/smoke-test")
+def smoke_test():
+    return {"status": "routing_works", "message": "The Python entry point is reachable!"}
 
 # Try to import main app
 try:
