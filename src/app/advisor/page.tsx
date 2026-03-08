@@ -460,12 +460,20 @@ export default function AdvisorDashboard() {
                           const originalText = btn.innerHTML;
                           btn.innerHTML = "⏳ Generating Audio...";
                           try {
-                            // Slice to 200 chars to prevent massive TTS payloads taking too long during demo
-                            const audio = new Audio(`${ML_BASE}/api/tts?text=${encodeURIComponent(msg.text.slice(0, 250))}&lang=${selectedLang}`);
-                            await audio.play();
+                            const ttsUrl = `/api/tts?text=${encodeURIComponent(msg.text.slice(0, 250))}&lang=${selectedLang}`;
+                            const res = await fetch(ttsUrl);
+                            if (!res.ok) throw new Error(`TTS failed: ${res.status}`);
+                            const blob = await res.blob();
+                            const blobUrl = URL.createObjectURL(blob);
+                            const audio = new Audio(blobUrl);
                             btn.innerHTML = `🔊 Playing Audio...`;
-                            audio.onended = () => btn.innerHTML = originalText;
+                            audio.play();
+                            audio.onended = () => {
+                              URL.revokeObjectURL(blobUrl);
+                              btn.innerHTML = originalText;
+                            };
                           } catch (err) {
+                            console.error("TTS error:", err);
                             btn.innerHTML = "⚠️ Audio Failed";
                             setTimeout(() => btn.innerHTML = originalText, 2000);
                           }
