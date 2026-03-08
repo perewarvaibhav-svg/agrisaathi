@@ -25,33 +25,38 @@ from .services import get_weather, get_forecast, get_soil_data, translate_text, 
 # Service Imports with fallbacks
 try:
     from .fertilizer_service import FertilizerInput, calculate_fertilizer_needs
-except ImportError:
+except ImportError as e:
+    print(f"Fertilizer module offline: {e}")
     class FertilizerInput(BaseModel): lang: str = "en"
-    def calculate_fertilizer_needs(x): return {"error": "Module offline"}
+    def calculate_fertilizer_needs(x): return {"recommendations": ["⚠️ Module Offline"], "scientific_reasoning": ["Maintenance"], "crop": "Refilling...", "stage": "N/A"}
 
 try:
     from .soil_service import SoilHealthInput, analyze_soil_health
-except ImportError:
+except ImportError as e:
+    print(f"Soil module offline: {e}")
     class SoilHealthInput(BaseModel): lang: str = "en"
-    def analyze_soil_health(x): return {"error": "Module offline"}
+    def analyze_soil_health(x): return {"status": "OFFLINE", "insights": ["⚠️ Service currently offline."], "rejuvenation_steps": ["Retry later"], "texture": "Unknown"}
 
 try:
     from .pest_service import PestInput, analyze_pest_risk
-except ImportError:
+except ImportError as e:
+    print(f"Pest module offline: {e}")
     class PestInput(BaseModel): lang: str = "en"
-    def analyze_pest_risk(x): return {"error": "Module offline"}
+    def analyze_pest_risk(x): return {"risk_level": "OFFLINE", "risk_score": 0, "threats": ["⚠️ Module Unavailable"], "actions": ["Check later"], "summary": "System maintenance mode."}
 
 try:
     from .yield_service import YieldInput, predict_yield
-except ImportError:
+except ImportError as e:
+    print(f"Yield module offline: {e}")
     class YieldInput(BaseModel): lang: str = "en"
-    def predict_yield(x): return {"error": "Module offline"}
+    def predict_yield(x): return {"summary": "⚠️ Yield predictor is offline for maintenance.", "advice": ["AI services temporarily paused."]}
 
 try:
     from .rotation_service import RotationInput, recommend_rotation
-except ImportError:
+except ImportError as e:
+    print(f"Rotation module offline: {e}")
     class RotationInput(BaseModel): lang: str = "en"
-    def recommend_rotation(x): return {"error": "Module offline"}
+    def recommend_rotation(x): return {"rotation_plan": ["⚠️ Rotation engine offline"], "nitrogen_fixer": "N/A", "ai_reasoning": "Maintenance", "summary": "Temporarily unavailable."}
 
 from .market_service import get_market_prices
 from .notification_service import NotificationPayload, FarmerContact, dispatch_alert, send_telegram_message

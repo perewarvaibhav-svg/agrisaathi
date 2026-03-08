@@ -76,7 +76,7 @@ ROTATION_DB = {
     }
 }
 
-from llm_service import get_llm_response
+from .llm_service import get_llm_response
 
 def recommend_rotation(data: RotationInput) -> dict:
     """

@@ -13,3 +13,6 @@ gTTS
 python-dotenv
 python-multipart
 gunicorn
+numpy
+joblib
+scikit-learn
