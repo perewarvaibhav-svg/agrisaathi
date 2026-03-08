@@ -67,6 +67,9 @@ export default function RootLayout({
                     strategy="afterInteractive"
                 />
 
+                {/* Hidden anchor for Google Translate */}
+                <div id="google_translate_element" style={{ display: "none", visibility: "hidden" }}></div>
+
                 <LenisProvider>
                     <Providers>{children}</Providers>
                 </LenisProvider>

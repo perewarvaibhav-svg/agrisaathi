@@ -64,8 +64,16 @@ export default function Navbar() {
         setLang(code);
         localStorage.setItem(LANG_KEY, code);
         setLangOpen(false);
-        // Dispatch internal language change event — backend handles translation via deep-translator
+        // Full page Google translation via cookie
+        if (code === "en") {
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname;
+        } else {
+            document.cookie = `googtrans=/en/${code}; path=/`;
+            document.cookie = `googtrans=/en/${code}; path=/; domain=` + window.location.hostname;
+        }
         window.dispatchEvent(new CustomEvent("agrisaathi_lang_change", { detail: code }));
+        window.location.reload();
     };
 
     const currentLang = LANGUAGES.find(l => l.code === lang) ?? LANGUAGES[0];
