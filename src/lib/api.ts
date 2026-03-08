@@ -19,7 +19,7 @@ export async function authenticatedFetch(
 ): Promise<Response> {
     // Check if user is authenticated
     const { data: { session } } = await supabase.auth.getSession();
-    
+
     if (!session || !session.user) {
         throw new AuthenticationError();
     }
