@@ -1,6 +1,7 @@
 import os
 import sys
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 
 # Add ml-backend to path
 current_dir = os.path.dirname(__file__)
@@ -15,42 +16,39 @@ try:
     os.chdir(backend_path)
     from main import app as main_app
     app = main_app
+    
+    # Auto-alias /api routes to / (Crucial for Vercel)
+    existing_routes = [r.path for r in app.routes if hasattr(r, 'path')]
+    for route in list(app.routes):
+        if hasattr(route, 'path') and route.path.startswith("/api/"):
+            short_path = route.path.replace("/api", "", 1)
+            if short_path not in existing_routes:
+                app.add_api_route(short_path, route.endpoint, methods=route.methods)
+                print(f"DEBUG: Bound alias {route.path} -> {short_path}")
 except Exception as e:
     import_error = str(e)
     app = FastAPI()
 
-# Routing Fix: Alias routes to handle Vercel's prefix stripping
-@app.get("/health")
 @app.get("/api/health")
-def health():
+@app.get("/health")
+def health_check():
     if import_error:
         return {"status": "error", "message": f"Import failed: {import_error}"}
-    return {"status": "ok", "message": "Backend is running"}
+    return {"status": "ok", "message": "Backend is running and aliased"}
 
-@app.get("/py-health")
 @app.get("/api/py-health")
-def py_health(request: Request):
-    routes = [{"path": r.path, "methods": r.methods} for r in app.routes]
+@app.get("/py-health")
+def py_health_check():
     return {
         "status": "online",
         "working_dir": os.getcwd(),
-        "backend_path": backend_path,
-        "request_path": request.url.path,
         "import_error": import_error,
-        "defined_routes": routes
+        "python_version": sys.version,
+        "routes": [r.path for r in app.routes if hasattr(r, 'path')]
     }
 
-# Forward any /chat or /api/chat if not already handled by main_app
-# In main.py, routes are defined as /api/XXX. 
-# We add aliases if they don't exist.
-for route in list(app.routes):
-    if hasattr(route, 'path') and route.path.startswith("/api/"):
-        short_path = route.path.replace("/api", "", 1)
-        # Check if short_path exists, if not, we could wrap it, 
-        # but FastAPI usually handles this if we mount correctly.
-
 @app.middleware("http")
-async def log_request(request: Request, call_next):
-    print(f"DEBUG: Request to {request.method} {request.url.path}")
+async def routing_middleware(request: Request, call_next):
+    print(f"DEBUG: {request.method} {request.url.path}")
     response = await call_next(request)
     return response

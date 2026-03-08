@@ -237,6 +237,7 @@ export default function AdvisorDashboard() {
         if (res.ok) {
           const d = await res.json();
           pushAI(formatModuleResponse(mod, d));
+          setIsTyping(false); // Immediate unlock
           return;
         }
       }
@@ -247,13 +248,13 @@ export default function AdvisorDashboard() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: question, lang: selectedLang }),
       });
+
       if (chatRes.ok) {
         const d = await chatRes.json();
         pushAI(d.message);
-        return;
+      } else {
+        pushAI(`⚠️ Backend Error (${chatRes.status}): Server returned an error. Please check if your Vercel environment variables are set and the backend is deployed.`);
       }
-
-      pushAI(`⚠️ Backend Error (${chatRes.status}): Server returned an error. Please check if your Vercel environment variables are set and the backend is deployed.`);
     } catch (err: any) {
       console.error("Backend connection failed:", err);
       pushAI(`⚠️ Connection Failed: ${err.message || 'Network error'}. Make sure the backend is reachable.`);
@@ -538,16 +539,19 @@ export default function AdvisorDashboard() {
               <button
                 onClick={handleSend}
                 disabled={isTyping || !input.trim()}
+                title={!input.trim() ? "Type a question" : "Send message"}
                 style={{
                   background: input.trim() ? C.accent : "rgba(173,255,47,0.1)",
                   color: input.trim() ? "#000" : C.dim,
                   border: "none", borderRadius: "10px",
                   padding: "0.65rem 1.4rem", fontWeight: 700,
-                  fontSize: "0.85rem", cursor: input.trim() ? "pointer" : "default",
+                  fontSize: "0.85rem", cursor: (isTyping || !input.trim()) ? "not-allowed" : "pointer",
                   transition: "all 0.2s", letterSpacing: "0.03em",
+                  opacity: isTyping ? 0.7 : 1,
+                  boxShadow: input.trim() ? "0 4px 12px rgba(173,255,47,0.2)" : "none"
                 }}
               >
-                {isTyping ? "…" : "Send ▶"}
+                {isTyping ? "..." : "Send ▶"}
               </button>
             </div>
           </main>
