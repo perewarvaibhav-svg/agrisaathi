@@ -1,3 +1,0 @@
-# pyproject.toml intentionally left minimal.
-# Vercel uses requirements.txt for Python dependency installation.
-# Do NOT add a [project] section here — it triggers uv sync which requires a uv.lock file.
