@@ -15,31 +15,31 @@ interface Message { id: number; role: "user" | "ai"; text: string; timestamp?: n
 /* ─── Format backend module responses cleanly ─── */
 const formatModuleResponse = (mod: string, d: Record<string, any>): string => {
   if (mod === "crop") {
-    const warns = (d.warnings as string[]);
-    return `🌾 CROP RECOMMENDATION\n\n${d.explanation}\n\nConfidence: ${d.confidence}%${warns?.length ? "\n\n⚠️ Warnings:\n" + warns.map(w => "• " + w).join("\n") : ""}`;
+    const warns = (d.warnings as string[]) || [];
+    return `🌾 CROP RECOMMENDATION\n\n${d.explanation || "No explanation provided."}\n\nConfidence: ${d.confidence || 0}%${warns.length ? "\n\n⚠️ Warnings:\n" + warns.map(w => "• " + w).join("\n") : ""}`;
   }
-  if (mod === "fertilizer") return `🧪 FERTILIZER PLAN\nCrop: ${d.crop} — Stage: ${d.stage}\n\n📦 Dosage:\n${(d.recommendations as string[]).map(r => "• " + r).join("\n")}\n\n🔬 Why:\n${(d.scientific_reasoning as string[]).map(r => "• " + r).join("\n")}`;
+  if (mod === "fertilizer") return `🧪 FERTILIZER PLAN\nCrop: ${d.crop || "N/A"} — Stage: ${d.stage || "N/A"}\n\n📦 Dosage:\n${((d.recommendations as string[]) || []).map(r => "• " + r).join("\n")}\n\n🔬 Why:\n${((d.scientific_reasoning as string[]) || []).map(r => "• " + r).join("\n")}`;
 
   if (mod === "weather") {
     const w = d.current_weather || {};
     return `🌤️ WEATHER & PREDICTIVE RISK [Score: ${d.risk?.score}/100]\nStatus: ${d.risk?.level} ${d.risk?.color}\n\n🌡️ Current: ${w.temp}°C | ${w.description}\n📅 Forecast: ${d.forecast_summary}\n\n🤖 AI Advice:\n${d.ai_advice}`;
   }
 
-  if (mod === "soil") return `🌍 SOIL INTELLIGENCE [${d.status}]\nTexture: ${d.texture || 'N/A'}\n\n📝 Insights:\n${(d.insights as string[]).map(i => "• " + i).join("\n")}${(d.rejuvenation_steps as string[])?.length ? "\n\n🌱 Rejuvenation:\n" + (d.rejuvenation_steps as string[]).map(s => "• " + s).join("\n") : ""}`;
+  if (mod === "soil") return `🌍 SOIL INTELLIGENCE [${d.status || "N/A"}]\nTexture: ${d.texture || 'N/A'}\n\n📝 Insights:\n${((d.insights as string[]) || []).map(i => "• " + i).join("\n")}${((d.rejuvenation_steps as string[]) || [])?.length ? "\n\n🌱 Rejuvenation:\n" + (d.rejuvenation_steps as string[]).map(s => "• " + s).join("\n") : ""}`;
 
   if (mod === "pest") {
     let text = `🐛 PEST & DISEASE DIAGNOSIS [${d.risk_level}]\nScore: ${d.risk_score}/100\n\n`;
     if (d.ai_diagnosis) text += `🧪 AI Diagnosis:\n${d.ai_diagnosis}\n\n`;
-    text += `🦠 Identified Threats:\n${(d.threats as string[]).map(t => "• " + t).join("\n")}\n\n`;
-    text += `💊 Immediate Actions:\n${(d.actions as string[]).map(a => "• " + a).join("\n")}\n\n`;
-    text += `📝 Summary: ${d.summary}`;
+    text += `🦠 Identified Threats:\n${((d.threats as string[]) || []).map(t => "• " + t).join("\n")}\n\n`;
+    text += `💊 Immediate Actions:\n${((d.actions as string[]) || []).map(a => "• " + a).join("\n")}\n\n`;
+    text += `📝 Summary: ${d.summary || "N/A"}`;
     return text;
   }
 
-  if (mod === "yield") return `📊 YIELD PREDICTION\n\n${d.summary}\n\n💡 Tips:\n${(d.advice as string[]).map(a => "• " + a).join("\n")}`;
+  if (mod === "yield") return `📊 YIELD PREDICTION\n\n${d.summary || "N/A"}\n\n💡 Tips:\n${((d.advice as string[]) || []).map(a => "• " + a).join("\n")}`;
 
   if (mod === "rotation") {
-    return `🔄 SMART ROTATION PLAN\n\n${(d.rotation_plan as string[]).join("\n")}\n\n🌱 Nitrogen Fixer: ${d.nitrogen_fixer}\n\n🔬 AI Reasoning:\n${d.ai_reasoning || (d.reasoning as string[])?.join("\n")}\n\n📝 Summary: ${d.summary}`;
+    return `🔄 SMART ROTATION PLAN\n\n${((d.rotation_plan as string[]) || []).join("\n")}\n\n🌱 Nitrogen Fixer: ${d.nitrogen_fixer || "N/A"}\n\n🔬 AI Reasoning:\n${d.ai_reasoning || (d.reasoning as string[])?.join("\n") || "N/A"}\n\n📝 Summary: ${d.summary || "N/A"}`;
   }
   return JSON.stringify(d, null, 2);
 };
@@ -144,9 +144,9 @@ export default function AdvisorDashboard() {
 
             let txt = `💰 MARKET PRICES — ${d.commodity} in ${d.state}\n`;
             txt += `📌 Current: ₹${d.current_price_inr}/${d.unit}${d.msp ? ` (MSP: ₹${d.msp})` : ""}\n`;
-            txt += `\n📈 7-Day Trend: ${d["7_day_trend"].slice(-3).map((t: { date: string; price: number }) => `${t.date}: ₹${t.price}`).join(" → ")}\n`;
-            txt += `\n🏪 Markets Today:\n` + d.market_centers.map((m: { market: string; price: number; change_pct: number }) => `• ${m.market}: ₹${m.price} (${m.change_pct > 0 ? "+" : ""}${m.change_pct}%)`).join("\n");
-            txt += `\n\n💡 Insights:\n` + d.market_insights.map((i: string) => `• ${i}`).join("\n");
+            txt += `\n📈 7-Day Trend: ${(d["7_day_trend"] || []).slice(-3).map((t: { date: string; price: number }) => `${t.date}: ₹${t.price}`).join(" → ")}\n`;
+            txt += `\n🏪 Markets Today:\n` + (d.market_centers || []).map((m: { market: string; price: number; change_pct: number }) => `• ${m.market || "Market"}: ₹${m.price || 0} (${(m.change_pct || 0) > 0 ? "+" : ""}${m.change_pct || 0}%)`).join("\n");
+            txt += `\n\n💡 Insights:\n` + (d.market_insights || []).map((i: string) => `• ${i}`).join("\n");
             pushAI(txt);
           } else {
             pushAI("❌ Could not fetch market prices. Server returned an error.");
@@ -204,7 +204,7 @@ export default function AdvisorDashboard() {
           txt += `${healthColor} Crop Health: ${d.health_label} (Score: ${d.health_score}/100)\n`;
           txt += `📡 NDVI: ${d.indices.ndvi} | EVI: ${d.indices.evi} | SAVI: ${d.indices.savi}\n`;
           txt += `📅 Last Satellite Pass: ${d.last_overpass} | Next: ${d.next_overpass}\n`;
-          if ((d.anomalies_detected as string[]).length > 0) {
+          if (((d.anomalies_detected as string[]) || []).length > 0) {
             txt += `\n⚠️ Anomalies Detected:\n` + (d.anomalies_detected as string[]).map((a: string) => `  ${a}`).join("\n");
           } else {
             txt += `\n✅ No anomalies detected — field appears healthy.`;

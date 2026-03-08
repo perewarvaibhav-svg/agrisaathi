@@ -432,7 +432,9 @@ function MarketPanel({ onSubmit }: Props) {
         <Card title="💰 Live Market Prices" desc="Get real-time mandi prices and selling advice for your commodity.">
             <div style={rowStyle}>
                 <Field label="Commodity">
-                    {ALL_CROPS.map(c => <option key={c} value={c.toLowerCase()}>{c}</option>)}
+                    <select style={inputStyle} value={f.commodity} onChange={sel("commodity")}>
+                        {ALL_CROPS.map(c => <option key={c} value={c.toLowerCase()}>{c}</option>)}
+                    </select>
                 </Field>
                 <Field label="State / Region">
                     <select style={inputStyle} value={f.state} onChange={sel("state")}>
