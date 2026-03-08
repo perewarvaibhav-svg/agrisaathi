@@ -65,15 +65,20 @@ export default function Navbar() {
         localStorage.setItem(LANG_KEY, code);
         setLangOpen(false);
         // Full page Google translation via cookie
-        if (code === "en") {
-            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname;
-        } else {
-            document.cookie = `googtrans=/en/${code}; path=/`;
-            document.cookie = `googtrans=/en/${code}; path=/; domain=` + window.location.hostname;
+        const cookieStr = code === "en" ? "" : `/en/${code}`;
+        const expires = code === "en" ? "expires=Thu, 01 Jan 1970 00:00:00 UTC;" : "";
+
+        // Set multiple variations for maximum compatibility across Vercel subdomains
+        document.cookie = `googtrans=${cookieStr}; ${expires} path=/`;
+        document.cookie = `googtrans=${cookieStr}; ${expires} path=/; domain=${window.location.hostname}`;
+        // Also handle the case of .vercel.app
+        if (window.location.hostname.includes("vercel.app")) {
+            const rootDomain = window.location.hostname.split('.').slice(-2).join('.');
+            document.cookie = `googtrans=${cookieStr}; ${expires} path=/; domain=.${rootDomain}`;
         }
+
         window.dispatchEvent(new CustomEvent("agrisaathi_lang_change", { detail: code }));
-        window.location.reload();
+        setTimeout(() => window.location.reload(), 100);
     };
 
     const currentLang = LANGUAGES.find(l => l.code === lang) ?? LANGUAGES[0];

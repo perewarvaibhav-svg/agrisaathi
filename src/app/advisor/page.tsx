@@ -253,9 +253,10 @@ export default function AdvisorDashboard() {
         return;
       }
 
-      pushAI("⚠️ Could not connect to the AI backend. If local, ensure Python is running. If deployed, check Vercel logs/Env variables.");
-    } catch {
-      pushAI("⚠️ Network error — make sure the backend is reachable and correctly configured.");
+      pushAI(`⚠️ Backend Error (${chatRes.status}): Server returned an error. Please check if your Vercel environment variables are set and the backend is deployed.`);
+    } catch (err: any) {
+      console.error("Backend connection failed:", err);
+      pushAI(`⚠️ Connection Failed: ${err.message || 'Network error'}. Make sure the backend is reachable.`);
     } finally {
       setIsTyping(false);
     }
