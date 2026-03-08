@@ -261,7 +261,7 @@ def crop_risk_intelligence(req: CropRiskRequest):
 
     # 3. Decision Support Analysis
     lang_name = LANG_NAMES.get(req.lang, "English")
-    sys_prompt = f"You are AgriSaathi's Precision Predictive AI. Respond in {lang_name}."
+    sys_prompt = f"You are AgriSaathi's Precision Predictive AI. Respond in {lang_name}. DO NOT use asterisks or markdown bolding."
     prompt = (
         f"DATA REPORT:\n- CURRENT: {temp}°C, {rain}mm rain, {humidity}% humidity.\n"
         f"- FORECAST: Max {max_forecast_temp}°C, Max Rain Prob {max_rain_prob}%.\n"
@@ -677,8 +677,8 @@ def ai_chat(req: ChatRequest):
     sys_prompt = (
         f"You are AgriSaathi, an expert AI agricultural advisor for Indian farmers. "
         f"You have access to real-time data. ALWAYS respond in {lang_name}. "
-        f"Be specific, practical, and give actionable advice with exact numbers when available. "
-        f"Format responses with bullet points for readability."
+        f"Be specific, practical, and give actionable advice. Format with bullet points. "
+        f"DO NOT use asterisks (*) or markdown bolding (**text**) in your response."
     )
 
     context_parts = []
@@ -756,7 +756,8 @@ def draft_scheme_document(req: SchemeRequest):
     lang_name = LANG_NAMES.get(req.lang, "English")
     sys_prompt = (
         f"You are a professional agricultural consultant. Your task is to DRAFT THE LITERAL TEXT of a formal government application letter. "
-        f"DO NOT explain how to apply. DO NOT give steps. ONLY provide the final, ready-to-print document in {lang_name}."
+        f"DO NOT explain how to apply. DO NOT give steps. ONLY provide the final, ready-to-print document in {lang_name}. "
+        f"DO NOT use asterisks (*) or markdown bolding (**text**)."
     )
     prompt = (
         f"DRAFT A LITERAL FORMAL APPLICATION LETTER for this scheme:\n"
@@ -787,7 +788,7 @@ class ContractRequest(BaseModel):
 def audit_contract(req: ContractRequest):
     """Uses LLM to detect exploitative clauses in farm contracts."""
     lang_name = LANG_NAMES.get(req.lang, "English")
-    sys_prompt = "You are an expert agricultural lawyer protecting Indian farmers from exploitative contracts."
+    sys_prompt = "You are an expert agricultural lawyer protecting Indian farmers from exploitative contracts. DO NOT use asterisks or markdown bolding."
     prompt = (
         f"Audit this {req.contract_type} contract for a farmer. Find ALL red flags in {lang_name}:\n\n"
         f"{req.contract_text}\n\n"
@@ -814,7 +815,7 @@ class SubsidyRequest(BaseModel):
 def match_subsidies(req: SubsidyRequest):
     """Matches farmer profile to eligible government schemes."""
     lang_name = LANG_NAMES.get(req.lang, "English")
-    sys_prompt = "You are AgriSaathi's scheme matching engine with deep knowledge of all central and state Indian agricultural schemes."
+    sys_prompt = "You are AgriSaathi's scheme matching engine with deep knowledge of all central and state Indian agricultural schemes. DO NOT use asterisks or markdown bolding."
     prompt = (
         f"Match this farmer to ALL eligible schemes (Central + {req.state} State) in {lang_name}:\n"
         f"- State: {req.state}, Crops: {req.crop_type}, Land: {req.land_area_acres} acres\n"
@@ -840,7 +841,7 @@ class DisputeRequest(BaseModel):
 def dispute_advisor(req: DisputeRequest):
     """Provides legal-grade dispute resolution guidance for farmers."""
     lang_name = LANG_NAMES.get(req.lang, "English")
-    sys_prompt = "You are a legal expert specializing in Indian agricultural disputes. Guide farmers step-by-step."
+    sys_prompt = "You are a legal expert specializing in Indian agricultural disputes. Guide farmers step-by-step. DO NOT use asterisks or markdown bolding."
     prompt = (
         f"Help this farmer in {req.state} resolve their {req.dispute_type} dispute in {lang_name}:\n"
         f"{req.description}\n\n"
@@ -910,7 +911,7 @@ def satellite_crop_analysis(req: SatelliteRequest):
         anomalies.append("🔴 Boundary stress detected — edge rows showing chlorophyll decline")
 
     # AI interpretation prompt
-    sys_prompt = "You are an expert satellite imagery analyst for Indian precision agriculture."
+    sys_prompt = "You are an expert satellite imagery analyst for Indian precision agriculture. DO NOT use asterisks or markdown bolding."
     prompt = (
         f"Analyze satellite crop health data for a {req.crop} field at lat={req.lat}, lon={req.lon} "
         f"({req.area_acres} acres) in {lang_name}:\n"
@@ -954,7 +955,7 @@ class GovernanceFeedRequest(BaseModel):
 def governance_feed(req: GovernanceFeedRequest):
     """Returns curated live government scheme updates for the given state and category."""
     lang_name = LANG_NAMES.get(req.lang, "English")
-    sys_prompt = "You are AgriSaathi's real-time government scheme intelligence engine with current knowledge of all Indian agricultural programs."
+    sys_prompt = "You are AgriSaathi's real-time government scheme intelligence engine with current knowledge of all Indian agricultural programs. DO NOT use asterisks or markdown bolding."
     prompt = (
         f"List ALL current and upcoming government agricultural schemes for {req.category} category "
         f"in {req.state} (include Central + State schemes) in {lang_name}. "

@@ -2,7 +2,7 @@ import os
 from typing import Optional
 from .config import settings
 
-def get_llm_response(prompt: str, system_prompt: str = "You are AgriSaathi, an expert AI agricultural advisor. Be concise, helpful, and friendly.") -> str:
+def get_llm_response(prompt: str, system_prompt: str = "You are AgriSaathi, an expert AI agricultural advisor. Be concise, helpful, and friendly. DO NOT use asterisks or markdown bolding.") -> str:
     # 1. Try Groq (Fastest)
     if settings.GROQ_API_KEY:
         try:
