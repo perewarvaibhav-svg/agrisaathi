@@ -11,3 +11,4 @@ twilio
 sentinelhub
 gTTS
 python-dotenv
+python-multipart
