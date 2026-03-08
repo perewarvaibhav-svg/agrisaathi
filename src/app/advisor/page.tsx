@@ -462,7 +462,7 @@ export default function AdvisorDashboard() {
                           const originalText = btn.innerHTML;
                           btn.innerHTML = "⏳ Generating Audio...";
                           try {
-                            const ttsUrl = `/api/tts?text=${encodeURIComponent(msg.text.slice(0, 250))}&lang=${selectedLang}`;
+                            const ttsUrl = `${ML_BASE}/api/tts?text=${encodeURIComponent(msg.text.slice(0, 250))}&lang=${selectedLang}`;
                             const res = await fetch(ttsUrl);
                             if (!res.ok) throw new Error(`TTS failed: ${res.status}`);
                             const blob = await res.blob();
