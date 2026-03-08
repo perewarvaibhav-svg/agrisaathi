@@ -68,7 +68,7 @@ app = FastAPI(title="Agrisaathi AI - Core Intelligence Engine v2.0")
 
 # Optional: Include Twilio IVR router if available
 try:
-    from twilio_ivr import router as ivr_router
+    from .twilio_ivr import router as ivr_router
     app.include_router(ivr_router)
     print("Twilio IVR features enabled")
 except ImportError:
