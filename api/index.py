@@ -642,7 +642,7 @@ LANG_NAMES = {
     "gu": "Gujarati", "ml": "Malayalam", "or": "Odia", "as": "Assamese",
     "ur": "Urdu", "sa": "Sanskrit", "ks": "Kashmiri", "ne": "Nepali",
     "sd": "Sindhi", "mai": "Maithili", "doi": "Dogri", "mni": "Manipuri",
-    "kok": "Konkani", "bho": "Bhojpuri"
+    "kok": "Konkani", "bho": "Bhojpuri", "brx": "Bodo", "sat": "Santali"
 }
 
 class ChatRequest(BaseModel):
@@ -995,7 +995,7 @@ def generate_voice_alert(text: str = Query(..., description="Text to speak"), la
 
     # Fallback to hindi if language not completely supported by gTTS natively
     tts_lang = lang.lower()
-    supported_gtts = ["en", "hi", "te", "ta", "mr", "pa", "bn", "gu", "ml", "ne", "ur"]
+    supported_gtts = ["en", "hi", "te", "ta", "mr", "pa", "bn", "gu", "ml", "ne", "ur", "kn", "or"]
     
     if tts_lang not in supported_gtts:
         tts_lang = "hi"

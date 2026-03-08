@@ -26,7 +26,9 @@ const LANGUAGES = [
     { code: "doi", label: "DOI", full: "डोगरी (Dogri)" },
     { code: "mni", label: "MNI", full: "ꯃꯤꯇꯩꯂꯣꯟ (Manipuri)" },
     { code: "kok", label: "KOK", full: "कोंकणी (Konkani)" },
-    { code: "bho", label: "BHO", full: "भोजपुरी (Bhojpuri)" }
+    { code: "bho", label: "BHO", full: "भोजपुरी (Bhojpuri)" },
+    { code: "brx", label: "BRX", full: "बड़ो (Bodo)" },
+    { code: "sat", label: "SAT", full: "ᱥᱟᱱᱛᱟᱲᱤ (Santali)" }
 ];
 
 const NAV_LINKS = [

@@ -1289,6 +1289,28 @@ body {
     display: none !important;
 }
 
+.goog-te-banner-frame.skiptranslate,
+.goog-te-banner-frame,
+#goog-gt-tt,
+.goog-te-balloon-frame,
+.goog-te-menu-value span:nth-child(2) {
+    display: none !important;
+    visibility: hidden !important;
+}
+
+body {
+    top: 0 !important;
+}
+
+.skiptranslate {
+    display: none !important;
+}
+
+font {
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
 .goog-text-highlight {
     background: transparent !important;
     box-shadow: none !important;
