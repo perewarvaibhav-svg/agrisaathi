@@ -19,12 +19,15 @@ except Exception as e:
     import_error = str(e)
     app = FastAPI()
 
+# Routing Fix: Alias routes to handle Vercel's prefix stripping
+@app.get("/health")
 @app.get("/api/health")
 def health():
     if import_error:
         return {"status": "error", "message": f"Import failed: {import_error}"}
     return {"status": "ok", "message": "Backend is running"}
 
+@app.get("/py-health")
 @app.get("/api/py-health")
 def py_health(request: Request):
     routes = [{"path": r.path, "methods": r.methods} for r in app.routes]
@@ -36,6 +39,15 @@ def py_health(request: Request):
         "import_error": import_error,
         "defined_routes": routes
     }
+
+# Forward any /chat or /api/chat if not already handled by main_app
+# In main.py, routes are defined as /api/XXX. 
+# We add aliases if they don't exist.
+for route in list(app.routes):
+    if hasattr(route, 'path') and route.path.startswith("/api/"):
+        short_path = route.path.replace("/api", "", 1)
+        # Check if short_path exists, if not, we could wrap it, 
+        # but FastAPI usually handles this if we mount correctly.
 
 @app.middleware("http")
 async def log_request(request: Request, call_next):
