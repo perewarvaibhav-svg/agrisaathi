@@ -298,7 +298,7 @@ def get_extended_forecast(req: GeoLangRequest):
 # MODULE 3A: AUTOMATED SCHEDULED ALERT ENGINE (CRON)
 # ============================================================
 
-from notification_service import FarmerContact, NotificationPayload, dispatch_alert
+from .notification_service import FarmerContact, NotificationPayload, dispatch_alert
 
 @app.post("/api/telegram/webhook")
 async def telegram_webhook(req: Request):
@@ -644,8 +644,8 @@ class ChatRequest(BaseModel):
     lang: str = "en"
     context: Optional[str] = None
 
-from llm_service import get_llm_response
-from market_service import get_market_prices
+from .llm_service import get_llm_response
+from .market_service import get_market_prices
 
 def _detect_commodity(text: str) -> Optional[str]:
     """Detect if the user is asking about a specific commodity price."""
@@ -869,7 +869,7 @@ def satellite_crop_analysis(req: SatelliteRequest):
     lang_name = LANG_NAMES.get(req.lang, "English")
 
     # Use New Service (Live Sentinel-Hub)
-    from satellite_service import satellite_service
+    from .satellite_service import satellite_service
     
     # 1. Fetch Real-World Satellite Indices
     res = satellite_service.get_crop_indices(req.lat, req.lon, buffer=0.005)
