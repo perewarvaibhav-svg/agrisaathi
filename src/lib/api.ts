@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-const ML_BASE = "";
+const ML_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 export class AuthenticationError extends Error {
     constructor(message: string = "Authentication required. Please login to access AI modules.") {

@@ -7,7 +7,7 @@ import ModulePanel from "@/components/ModulePanel";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ChatLog from "@/components/ChatLog";
 
-const ML_BASE = "";
+const ML_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 /* ─── Types ─── */
 interface Message { id: number; role: "user" | "ai"; text: string; timestamp?: number; }
