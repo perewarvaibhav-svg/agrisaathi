@@ -6,6 +6,8 @@ numpy
 supabase
 joblib
 deep-translator
+groq
+google-generativeai
 requests
 httpx
 pydantic-settings
@@ -13,4 +15,3 @@ twilio
 sentinelhub
 gTTS
 python-dotenv
-
