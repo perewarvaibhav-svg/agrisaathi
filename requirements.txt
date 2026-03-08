@@ -1,4 +1,5 @@
 fastapi
+uvicorn
 scikit-learn
 pandas
 numpy
@@ -12,3 +13,4 @@ twilio
 sentinelhub
 gTTS
 python-dotenv
+
