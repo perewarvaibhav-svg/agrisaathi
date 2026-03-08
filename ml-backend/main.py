@@ -967,7 +967,8 @@ def generate_voice_alert(text: str = Query(..., description="Text to speak"), la
         fp = io.BytesIO()
         tts.write_to_fp(fp)
         fp.seek(0)
-        return StreamingResponse(fp, media_type="audio/mpeg")
+        from fastapi import Response
+        return Response(content=fp.read(), media_type="audio/mpeg")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"TTS Generation failed: {e}")
 

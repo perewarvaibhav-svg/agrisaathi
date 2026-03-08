@@ -253,9 +253,9 @@ export default function AdvisorDashboard() {
         return;
       }
 
-      pushAI("⚠️ Could not connect to AI backend. Make sure the Python server is running on port 8000.");
+      pushAI("⚠️ Could not connect to the AI backend. If local, ensure Python is running. If deployed, check Vercel logs/Env variables.");
     } catch {
-      pushAI("⚠️ Network error — make sure the backend is running: `uvicorn main:app --port 8000`");
+      pushAI("⚠️ Network error — make sure the backend is reachable and correctly configured.");
     } finally {
       setIsTyping(false);
     }
