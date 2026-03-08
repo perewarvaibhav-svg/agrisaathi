@@ -1,10 +1,6 @@
 fastapi
 uvicorn
-scikit-learn
-pandas
-numpy
 supabase
-joblib
 deep-translator
 groq
 google-generativeai
