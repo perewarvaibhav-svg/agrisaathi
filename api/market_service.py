@@ -5,7 +5,7 @@ Falls back to realistic mock data when API key is not configured.
 """
 import requests
 from datetime import datetime
-from config import settings
+from .config import settings
 
 # Base MSP values mapping (₹/quintal) for logic insight generation
 MANDI_MSP = {

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse
 from twilio.twiml.voice_response import VoiceResponse
-from llm_service import get_llm_response
+from .llm_service import get_llm_response
 
 router = APIRouter()
 
