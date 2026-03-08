@@ -76,7 +76,7 @@ except ImportError:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "*"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -136,7 +136,7 @@ def read_root():
 @app.get("/health")
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "message": "AgriSaathi Backend is Running on Vercel"}
+    return {"status": "ok", "message": "AgriSaathi Backend is Running on Railway"}
 
 @app.get("/py-health")
 @app.get("/api/py-health")
@@ -153,6 +153,7 @@ def py_health():
 # MODULE 1: AI CROP RECOMMENDATION (ML Model)
 # ============================================================
 
+@app.post("/recommend")
 @app.post("/api/recommend", response_model=RecommendationResponse)
 def recommend_crop(features: CropFeatures):
     """Module 1: Recommends the best crop based on soil & climate parameters."""
@@ -180,6 +181,7 @@ def recommend_crop(features: CropFeatures):
 # MODULE 2: FERTILIZER OPTIMISATION
 # ============================================================
 
+@app.post("/fertilizer-optimize")
 @app.post("/api/fertilizer-optimize")
 def optimize_fertilizer(data: FertilizerInput):
     """Module 2: Personalized NPK nutrient management per crop and growth stage."""
@@ -203,6 +205,8 @@ class CropRiskRequest(BaseModel):
     stage: str = "Vegetative"
     lang: str = "en"
 
+@app.post("/crop-risk")
+@app.post("/weather-advice")
 @app.post("/api/crop-risk")
 @app.post("/api/weather-advice")  # Alias for backward compatibility
 def crop_risk_intelligence(req: CropRiskRequest):
@@ -449,6 +453,7 @@ def pest_disease_prediction(data: PestInput):
 # MODULE 6: YIELD PREDICTION
 # ============================================================
 
+@app.post("/yield-predict")
 @app.post("/api/yield-predict")
 def yield_prediction(data: YieldInput):
     """Module 6: Estimates expected crop yield based on crop, soil, and climate inputs."""
@@ -465,6 +470,7 @@ def yield_prediction(data: YieldInput):
 # MODULE 7: SMART CROP ROTATION PLANNER
 # ============================================================
 
+@app.post("/crop-rotation")
 @app.post("/api/crop-rotation")
 def crop_rotation_planner(data: RotationInput):
     """Module 7: Generates a 3-season crop rotation plan based on current crop and soil profile."""
@@ -657,6 +663,7 @@ def _detect_commodity(text: str) -> Optional[str]:
             return comm
     return None
 
+@app.post("/chat")
 @app.post("/api/chat")
 def ai_chat(req: ChatRequest):
     print(f"[BACKEND] Received chat request: {req.message[:50]}...")
