@@ -29,6 +29,14 @@ const btnStyle: React.CSSProperties = {
     fontSize: "0.85rem", cursor: "pointer", letterSpacing: "0.05em",
 };
 
+const ALL_CROPS = [
+    "Rice", "Wheat", "Maize", "Cotton", "Soybean", "Sugarcane", "Groundnut", "Tomato", "Onion", "Potato",
+    "Mustard", "Turmeric", "Chilli", "Coffee", "Tea", "Rubber", "Coconut", "Apple", "Mango", "Banana",
+    "Grapes", "Pomegranate", "Cardamom", "Black Pepper", "Cinamon", "Clove", "Garlic", "Ginger", "Jute",
+    "Tobacco", "Barley", "Bajra", "Jowar", "Ragi", "Sunflower", "Safflower", "Sesame", "Linseed", "Castor",
+    "Palm Oil", "Cashew", "Areca Nut", "Betel Leaf", "Cocoa", "Vanilla", "Peppermint", "Lavender", "Saffron"
+];
+
 const MODULES = [
     // ── AI Farming Modules ──
     { id: "crop", icon: "🌾", label: "Crop Recommend", group: "AI" },
@@ -158,7 +166,7 @@ function FertilizerPanel({ onSubmit }: Props) {
             <div style={rowStyle}>
                 <Field label="Crop Type">
                     <select style={inputStyle} value={f.crop_type} onChange={sel("crop_type")}>
-                        {["rice", "wheat", "maize", "cotton", "soybean", "sugarcane", "groundnut", "tomato"].map(c => <option key={c}>{c}</option>)}
+                        {ALL_CROPS.map(c => <option key={c} value={c.toLowerCase()}>{c}</option>)}
                     </select>
                 </Field>
                 <Field label="Growth Stage">
@@ -287,7 +295,7 @@ function PestPanel({ onSubmit }: Props) {
             <div style={rowStyle}>
                 <Field label="Crop">
                     <select style={inputStyle} value={f.crop} onChange={sel("crop")}>
-                        {["rice", "wheat", "maize", "cotton", "tomato", "groundnut", "soybean"].map(c => <option key={c}>{c}</option>)}
+                        {ALL_CROPS.map(c => <option key={c} value={c.toLowerCase()}>{c}</option>)}
                     </select>
                 </Field>
                 <Field label="Growth Stage">
@@ -339,7 +347,7 @@ function YieldPanel({ onSubmit }: Props) {
             <div style={rowStyle}>
                 <Field label="Crop">
                     <select style={inputStyle} value={f.crop} onChange={sel("crop")}>
-                        {["rice", "wheat", "maize", "cotton", "soybean", "sugarcane", "groundnut", "tomato"].map(c => <option key={c}>{c}</option>)}
+                        {ALL_CROPS.map(c => <option key={c} value={c.toLowerCase()}>{c}</option>)}
                     </select>
                 </Field>
                 <Field label="Seed Variety">
@@ -386,7 +394,7 @@ function RotationPanel({ onSubmit }: Props) {
             <div style={rowStyle}>
                 <Field label="Current Crop">
                     <select style={inputStyle} value={f.current_crop} onChange={sel("current_crop")}>
-                        {["rice", "wheat", "maize", "cotton", "soybean", "sugarcane", "groundnut"].map(c => <option key={c}>{c}</option>)}
+                        {ALL_CROPS.map(c => <option key={c} value={c.toLowerCase()}>{c}</option>)}
                     </select>
                 </Field>
                 <Field label="Previous Crop">
@@ -424,9 +432,7 @@ function MarketPanel({ onSubmit }: Props) {
         <Card title="💰 Live Market Prices" desc="Get real-time mandi prices and selling advice for your commodity.">
             <div style={rowStyle}>
                 <Field label="Commodity">
-                    <select style={inputStyle} value={f.commodity} onChange={sel("commodity")}>
-                        {["rice", "wheat", "maize", "cotton", "soybean", "groundnut", "onion", "tomato", "potato", "sugarcane", "mustard", "turmeric", "chilli"].map(c => <option key={c}>{c}</option>)}
-                    </select>
+                    {ALL_CROPS.map(c => <option key={c} value={c.toLowerCase()}>{c}</option>)}
                 </Field>
                 <Field label="State / Region">
                     <select style={inputStyle} value={f.state} onChange={sel("state")}>
@@ -460,7 +466,7 @@ function SatellitePanel({ onSubmit }: Props) {
                 <Field label="Longitude"><input style={inputStyle} value={f.lon} onChange={inp("lon")} /></Field>
                 <Field label="Crop Type">
                     <select style={inputStyle} value={f.crop} onChange={sel("crop")}>
-                        {["rice", "wheat", "maize", "cotton", "soybean", "sugarcane", "groundnut", "tomato"].map(c => <option key={c}>{c}</option>)}
+                        {ALL_CROPS.map(c => <option key={c} value={c.toLowerCase()}>{c}</option>)}
                     </select>
                 </Field>
                 <Field label="Field Area (acres)"><input style={inputStyle} type="number" value={f.area_acres} onChange={inp("area_acres")} /></Field>
@@ -549,13 +555,13 @@ function SubsidyPanel({ onSubmit }: Props) {
                 </Field>
                 <Field label="Main Crop">
                     <select style={inputStyle} value={f.crop_type} onChange={sel("crop_type")}>
-                        {["rice", "wheat", "maize", "cotton", "soybean", "sugarcane", "groundnut", "tomato", "onion"].map(c => <option key={c}>{c}</option>)}
+                        {ALL_CROPS.map(c => <option key={c} value={c.toLowerCase()}>{c}</option>)}
                     </select>
                 </Field>
                 <Field label="Land (acres)"><input style={inputStyle} type="number" value={f.land_area_acres} onChange={inp("land_area_acres")} /></Field>
                 <Field label="Category">
                     <select style={inputStyle} value={f.farmer_category} onChange={sel("farmer_category")}>
-                        {["general", "SC", "ST", "OBC", "woman_farmer"].map(c => <option key={c}>{c}</option>)}
+                        {[["general", "General"], ["SC", "SC"], ["ST", "ST"], ["OBC", "OBC"], ["woman_farmer", "Woman Farmer"]].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                     </select>
                 </Field>
                 <Field label="Annual Income (Rs.)"><input style={inputStyle} type="number" value={f.annual_income_inr} onChange={inp("annual_income_inr")} /></Field>
@@ -588,7 +594,7 @@ function SchemeDraftPanel({ onSubmit }: Props) {
                 <Field label="Land (acres)"><input style={inputStyle} type="number" value={f.land_area_acres} onChange={inp("land_area_acres")} /></Field>
                 <Field label="Your Full Name"><input style={inputStyle} value={f.farmer_name} onChange={inp("farmer_name")} placeholder="e.g. Ramesh Kumar" /></Field>
                 <Field label="District, State"><input style={inputStyle} value={f.location} onChange={inp("location")} placeholder="e.g. Nashik, Maharashtra" /></Field>
-                <Field label="Crop Type"><input style={inputStyle} value={f.crop_type} onChange={inp("crop_type")} placeholder="e.g. rice" /></Field>
+                <Field label="Crop Type"><input style={inputStyle} value={f.crop_type} onChange={inp("crop_type")} placeholder="e.g. Rice" /></Field>
                 <Field label="Aadhaar Last 4 Digits"><input style={inputStyle} value={f.aadhaar_last4} onChange={inp("aadhaar_last4")} placeholder="e.g. 4821" maxLength={4} /></Field>
             </div>
             <button style={btnStyle} onClick={() => onSubmit(`draft scheme document for ${f.scheme_name} for ${f.farmer_name}`, { module: "scheme_draft", ...f })}>⚡ Draft Application Letter</button>
@@ -605,9 +611,7 @@ function ContractPanel({ onSubmit }: Props) {
     return (
         <Card title="⚖️ Contract & Loan Audit" desc="Paste your farm contract or loan agreement — AI detects hidden clauses.">
             <Field label="Contract Type">
-                <select style={inputStyle} value={f.contract_type} onChange={sel("contract_type")}>
-                    {["loan", "sale_agreement", "lease", "insurance", "input_supply", "buyback_agreement"].map(t => <option key={t}>{t.replace(/_/g, " ")}</option>)}
-                </select>
+                {[["loan", "Loan"], ["sale_agreement", "Sale Agreement"], ["lease", "Lease"], ["insurance", "Insurance"], ["input_supply", "Input Supply"], ["buyback_agreement", "Buyback Agreement"]].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </Field>
             <Field label="Paste Contract Text Below">
                 <textarea
@@ -632,9 +636,7 @@ function DisputePanel({ onSubmit }: Props) {
         <Card title="🤝 Dispute & Legal Advisor" desc="Get step-by-step legal guidance for insurance rejections, land disputes & more.">
             <div style={rowStyle}>
                 <Field label="Dispute Type">
-                    <select style={inputStyle} value={f.dispute_type} onChange={sel("dispute_type")}>
-                        {["insurance_rejection", "land_record_error", "water_rights", "msm_price_dispute", "loan_coercion", "pmkisan_not_received", "fertilizer_adulteration"].map(t => <option key={t}>{t.replace(/_/g, " ")}</option>)}
-                    </select>
+                    {[["insurance_rejection", "Insurance Rejection"], ["land_record_error", "Land Record Error"], ["water_rights", "Water Rights"], ["msm_price_dispute", "MSM Price Dispute"], ["loan_coercion", "Loan Coercion"], ["pmkisan_not_received", "PM-KISAN Not Received"], ["fertilizer_adulteration", "Fertilizer Adulteration"]].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                 </Field>
                 <Field label="Your State">
                     <select style={inputStyle} value={f.state} onChange={sel("state")}>
@@ -671,7 +673,7 @@ function GovernancePanel({ onSubmit }: Props) {
                 </Field>
                 <Field label="Category">
                     <select style={inputStyle} value={f.category} onChange={sel("category")}>
-                        {["all", "subsidy", "insurance", "credit", "irrigation", "organic_farming", "mechanization", "disaster_relief"].map(c => <option key={c}>{c.replace(/_/g, " ")}</option>)}
+                        {[["all", "All"], ["subsidy", "Subsidy"], ["insurance", "Insurance"], ["credit", "Credit"], ["irrigation", "Irrigation"], ["organic_farming", "Organic Farming"], ["mechanization", "Mechanization"], ["disaster_relief", "Disaster Relief"]].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
                     </select>
                 </Field>
             </div>
