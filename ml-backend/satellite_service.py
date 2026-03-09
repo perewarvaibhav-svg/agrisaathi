@@ -41,7 +41,7 @@ class SatelliteService:
             function setup() {
               return {
                 input: ["B02", "B04", "B08"],
-                output: { id: "default", bands: 2 }
+                output: { id: "default", bands: 2, sampleType: "FLOAT32" }
               };
             }
             function evaluatePixel(sample) {
