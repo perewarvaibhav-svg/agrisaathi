@@ -64,6 +64,7 @@ export default function AdvisorDashboard() {
   const [selectedLang, setSelectedLang] = useState("en");
   const [showHistory, setShowHistory] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [chatSessions, setChatSessions] = useState<Array<{ id: string; title: string; date: string; messages: Message[] }>>([]);
   const [mounted, setMounted] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
@@ -119,6 +120,7 @@ export default function AdvisorDashboard() {
 
   /* ── Main submit handler (used by ModulePanel + chat input) ── */
   const handleSubmit = async (question: string, payload?: Record<string, unknown>) => {
+    setShowMobileSidebar(false);
     const userMsg: Message = { id: Date.now(), role: "user", text: question, timestamp: Date.now() };
     setMessages(prev => [...prev, userMsg]);
     setIsTyping(true);
@@ -335,7 +337,7 @@ export default function AdvisorDashboard() {
         }}>
 
           {/* ══ LEFT SIDEBAR — Module Selector ══ */}
-          <aside style={{
+          <aside className={`sidebar ${showMobileSidebar ? "mobile-open" : ""}`} style={{
             width: "300px", flexShrink: 0,
             background: C.sidebar,
             borderRight: `1px solid ${C.border}`,
@@ -343,8 +345,11 @@ export default function AdvisorDashboard() {
             padding: "1.25rem 0.75rem",
             display: "flex", flexDirection: "column", gap: "0.75rem",
           }}>
-            <div style={{ fontSize: "0.68rem", letterSpacing: "0.15em", color: C.dim, padding: "0 0.5rem", marginBottom: "0.25rem" }}>
-              SELECT AI MODULE
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem", padding: "0 0.5rem" }}>
+              <div style={{ fontSize: "0.68rem", letterSpacing: "0.15em", color: C.dim }}>
+                SELECT AI MODULE
+              </div>
+              <button className="mobile-close-btn" onClick={() => setShowMobileSidebar(false)}>✕</button>
             </div>
             <ModulePanel onSubmit={handleSubmit} />
 
@@ -370,7 +375,10 @@ export default function AdvisorDashboard() {
               letterSpacing: "0.04em", flexShrink: 0,
               display: "flex", alignItems: "center", justifyContent: "space-between",
             }}>
-              <span>🌾 AgriSaathi AI Assistant</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <button className="mobile-menu-btn" onClick={() => setShowMobileSidebar(true)}>☰ Modules</button>
+                <span>🌾 AgriSaathi AI</span>
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                 <span style={{ fontSize: "0.72rem", color: C.dim, fontWeight: 400 }}>
                   Lang: {selectedLang.toUpperCase()}
@@ -668,9 +676,41 @@ export default function AdvisorDashboard() {
         main > div::-webkit-scrollbar { width: 4px; }
         main > div::-webkit-scrollbar-track { background: transparent; }
         main > div::-webkit-scrollbar-thumb { background: rgba(173,255,47,0.1); border-radius: 4px; }
+        
+        .mobile-menu-btn {
+          display: none;
+          background: rgba(173,255,47,0.1);
+          border: 1px solid rgba(173,255,47,0.3);
+          color: #ADFF2F;
+          padding: 0.3rem 0.6rem;
+          border-radius: 6px;
+          cursor: pointer;
+        }
+        .mobile-close-btn {
+          display: none;
+          background: transparent;
+          border: none;
+          color: #ADFF2F;
+          font-size: 1.2rem;
+          cursor: pointer;
+        }
+
         @media (max-width: 768px) {
-          aside { width: 100% !important; height: auto !important; border-right: none !important; border-bottom: 1px solid rgba(173,255,47,0.1); }
-          #dashboard-root { flex-direction: column !important; }
+          .sidebar {
+            position: absolute;
+            left: -100%;
+            top: 90px;
+            bottom: 0px;
+            height: calc(100vh - 90px) !important;
+            z-index: 1000;
+            transition: left 0.3s ease;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.8);
+            width: 85% !important; /* Take up 85% of screen to allow clicking outside/showing chat under */
+          }
+          .sidebar.mobile-open {
+            left: 0;
+          }
+          .mobile-menu-btn, .mobile-close-btn { display: block; }
         }
       `}</style>
       </div>
