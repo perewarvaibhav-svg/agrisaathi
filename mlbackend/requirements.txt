@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+scikit-learn
+pandas
+numpy
+supabase
+joblib
+deep-translator
+requests
+httpx
+pydantic-settings
+twilio
+sentinelhub
