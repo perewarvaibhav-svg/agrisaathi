@@ -86,16 +86,46 @@ def detect_language_from_coords(lat: float, lon: float):
 def translate_text(text: str, target_lang: str = "hi") -> str:
     """
     Translates text to target language using deep-translator / Google Translate.
-    Falls back gracefully to original text on any error.
+    - Chunks long text into ≤4500 char pieces to stay under the API limit
+    - Retries once on transient failure
+    - Falls back gracefully to original text on any error
     """
     if not text or target_lang == "en":
         return text
-    try:
-        translated = GoogleTranslator(source="auto", target=target_lang).translate(text)
-        return translated if translated else text
-    except Exception as e:
-        print(f"Translation error ({target_lang}): {e}")
-        return text
+
+    MAX_CHUNK = 4500
+
+    def _translate_chunk(chunk: str) -> str:
+        for attempt in range(2):
+            try:
+                result = GoogleTranslator(source="auto", target=target_lang).translate(chunk)
+                if result:
+                    return result
+            except Exception as e:
+                print(f"Translation attempt {attempt+1} failed ({target_lang}): {e}")
+        return chunk  # fallback to original chunk
+
+    # If short enough, translate directly
+    if len(text) <= MAX_CHUNK:
+        return _translate_chunk(text)
+
+    # Split into chunks at paragraph/sentence boundaries where possible
+    import re
+    sentences = re.split(r'(?<=[.!\?\n])\s+', text)
+    chunks, current = [], ""
+    for sentence in sentences:
+        if len(current) + len(sentence) + 1 <= MAX_CHUNK:
+            current += (" " if current else "") + sentence
+        else:
+            if current:
+                chunks.append(current)
+            current = sentence
+    if current:
+        chunks.append(current)
+
+    translated_parts = [_translate_chunk(c) for c in chunks]
+    return " ".join(translated_parts)
+
 
 
 # ============================================================
