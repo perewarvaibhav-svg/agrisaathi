@@ -1,10 +1,14 @@
 import sys
 import os
+import importlib.util
 
-# Add ml-backend to system path so imports inside ml-backend/ work correctly when run from root
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "ml-backend")))
+# Safely import ml-backend/main.py without triggering a circular import on 'main'
+backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "ml-backend"))
+sys.path.insert(0, backend_path)
 
-from main import app
+# Import the actual FastAPI app as backend_main to avoid conflicting with THIS main.py
+import main as backend_main
+app = backend_main.app
 
 if __name__ == "__main__":
     import uvicorn
