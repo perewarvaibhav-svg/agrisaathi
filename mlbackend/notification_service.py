@@ -10,7 +10,7 @@ import os
 import requests
 from pydantic import BaseModel
 from typing import Optional
-from config import settings
+from .config import settings
 
 
 # ============================================================

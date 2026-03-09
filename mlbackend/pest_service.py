@@ -80,7 +80,7 @@ PEST_LIBRARY = {
     }
 }
 
-from llm_service import get_llm_response
+from .llm_service import get_llm_response
 
 def analyze_pest_risk(data: PestInput) -> dict:
     """

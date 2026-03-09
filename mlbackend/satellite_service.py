@@ -10,7 +10,7 @@ from sentinelhub import (
     CRS,
     SHConfig,
 )
-from config import settings
+from .config import settings
 
 class SatelliteService:
     def __init__(self):

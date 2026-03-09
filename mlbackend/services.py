@@ -1,6 +1,6 @@
 import requests
 from deep_translator import GoogleTranslator
-from config import settings
+from .config import settings
 
 # ============================================================
 # LANGUAGE DETECTION FROM GEOLOCATION

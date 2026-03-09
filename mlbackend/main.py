@@ -19,42 +19,42 @@ except ImportError:
         @staticmethod
         def array(x): return x
 
-from services import get_weather, get_forecast, get_soil_data, translate_text, detect_language_from_coords
+from .services import get_weather, get_forecast, get_soil_data, translate_text, detect_language_from_coords
 
 # Service Imports with fallbacks
 try:
-    from fertilizer_service import FertilizerInput, calculate_fertilizer_needs
+    from .fertilizer_service import FertilizerInput, calculate_fertilizer_needs
 except ImportError:
     class FertilizerInput(BaseModel): lang: str = "en"
     def calculate_fertilizer_needs(x): return {"error": "Module offline"}
 
 try:
-    from soil_service import SoilHealthInput, analyze_soil_health
+    from .soil_service import SoilHealthInput, analyze_soil_health
 except ImportError:
     class SoilHealthInput(BaseModel): lang: str = "en"
     def analyze_soil_health(x): return {"error": "Module offline"}
 
 try:
-    from pest_service import PestInput, analyze_pest_risk
+    from .pest_service import PestInput, analyze_pest_risk
 except ImportError:
     class PestInput(BaseModel): lang: str = "en"
     def analyze_pest_risk(x): return {"error": "Module offline"}
 
 try:
-    from yield_service import YieldInput, predict_yield
+    from .yield_service import YieldInput, predict_yield
 except ImportError:
     class YieldInput(BaseModel): lang: str = "en"
     def predict_yield(x): return {"error": "Module offline"}
 
 try:
-    from rotation_service import RotationInput, recommend_rotation
+    from .rotation_service import RotationInput, recommend_rotation
 except ImportError:
     class RotationInput(BaseModel): lang: str = "en"
     def recommend_rotation(x): return {"error": "Module offline"}
 
-from market_service import get_market_prices
-from notification_service import NotificationPayload, FarmerContact, dispatch_alert, send_telegram_message
-from config import settings
+from .market_service import get_market_prices
+from .notification_service import NotificationPayload, FarmerContact, dispatch_alert, send_telegram_message
+from .config import settings
 
 # Initialize Supabase Client
 try:
@@ -68,7 +68,7 @@ app = FastAPI(title="Agrisaathi AI - Core Intelligence Engine v2.0")
 
 # Optional: Include Twilio IVR router if available
 try:
-    from twilio_ivr import router as ivr_router
+    from .twilio_ivr import router as ivr_router
     app.include_router(ivr_router)
     print("Twilio IVR features enabled")
 except ImportError:
@@ -290,7 +290,7 @@ def get_extended_forecast(req: GeoLangRequest):
 # MODULE 3A: AUTOMATED SCHEDULED ALERT ENGINE (CRON)
 # ============================================================
 
-from notification_service import FarmerContact, NotificationPayload, dispatch_alert
+from .notification_service import FarmerContact, NotificationPayload, dispatch_alert
 
 @app.post("/api/telegram/webhook")
 async def telegram_webhook(req: Request):
@@ -636,8 +636,8 @@ class ChatRequest(BaseModel):
     lang: str = "en"
     context: Optional[str] = None
 
-from llm_service import get_llm_response
-from market_service import get_market_prices
+from .llm_service import get_llm_response
+from .market_service import get_market_prices
 
 def _detect_commodity(text: str) -> Optional[str]:
     """Detect if the user is asking about a specific commodity price."""
@@ -861,7 +861,7 @@ def satellite_crop_analysis(req: SatelliteRequest):
     lang_name = LANG_NAMES.get(req.lang, "English")
 
     # Use New Service (Live Sentinel-Hub)
-    from satellite_service import satellite_service
+    from .satellite_service import satellite_service
     
     # 1. Fetch Real-World Satellite Indices
     res = satellite_service.get_crop_indices(req.lat, req.lon, buffer=0.005)

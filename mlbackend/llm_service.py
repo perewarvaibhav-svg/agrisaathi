@@ -1,6 +1,6 @@
 import os
 from typing import Optional
-from config import settings
+from .config import settings
 
 def get_llm_response(prompt: str, system_prompt: str = "You are AgriSaathi, an expert AI agricultural advisor. Be concise, helpful, and friendly.") -> str:
     # 1. Try Groq (Fastest)
